@@ -1,0 +1,202 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>D3.js HW03</title>
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+    <style>
+        h1{ color: navy; }
+        body{ background-color: cornsilk; }
+    </style>
+</head>
+<body>
+    
+    <h1>&nbsp;條件著色[if...else...][資料綁定]</h1>
+    
+    <script>
+        var ary = [85, 60, 99, 49, 77, 59];
+        var d3body = d3.select("body");
+        
+//      資料綁定函式，被綁定的資料會自動產生相應數量的(容器/html標籤)
+        function bind(dataSet){
+            var d3select = d3body.selectAll("div").data(dataSet);
+            d3select.enter().append("div");
+            d3select.exit().remove();
+        }
+//      資料給予函式，<div>中的資料會被d3寫入(.text)
+//      d3定義，在select/selectAll底下的匿名函式可直接使用d(內容),i(索引值)
+        function render(){
+            d3.selectAll("div").text(function(d, i){
+                return (i + 1)+":"+d;
+            }).style({
+                color: function(d){
+                    if(d < 70){
+                        return "red";
+                    }else{
+                        return "black";
+                    }
+                }
+            });
+        }
+        
+        bind(ary);
+        render();
+//      console.log(d3.selectAll("div"));
+    </script>
+    
+    <br><hr>
+    
+    <h1>&nbsp;新增/移除資料與圖表重繪[資料綁定]</h1>
+    
+    <input type="button" value="新增" onclick="add()">
+    <input type="button" value="移除" onclick="kick()">
+    <br>
+    
+    <script>
+        var ary = [85, 60, 99, 49, 77, 59];
+        var d3body = d3.select("body");
+        var svg1Width = 1260, svg1Height = 250, svg1Padding = 50;
+        
+        function svg1(){
+            d3body.append("svg")
+                  .attr({
+                         id: "barChart",
+                         width: svg1Width,
+                         height: svg1Height
+            });
+        }
+        
+        svg1();
+        bind(ary);
+        render();
+        
+//      資料綁定函式，被綁定的資料會自動產生相應數量的(容器/html標籤)
+        function bind(dataSet){
+            var svg1 = d3.select("#barChart");
+            var d3select = svg1.selectAll("rect").data(dataSet);
+            d3select.enter().append("rect");
+            d3select.exit().remove();
+            var d3selectText = svg1.selectAll("text").data(dataSet);
+            d3selectText.enter().append("text");
+            d3selectText.exit().remove();
+        }
+        
+//      資料給予函式，<div>中的資料會被d3寫入(.text)
+//      d3定義，在select/selectAll底下的匿名函式可直接使用d(內容),i(索引值)
+        function render(){
+            
+            var yScale = d3.scale.linear()
+                             .domain([10, 100])
+                             .rangeRound([100, 1500]);
+            
+            d3.selectAll("#barChart rect")
+              .attr({
+                   x: function(d, i){
+                       return svg1Padding + 43 * i;
+                   },
+                   y: function(d){
+                       return svg1Height - svg1Padding - yScale(d)/10;
+                   },
+                   width: 40,
+                   height: function(d){
+                       return yScale(d)/10;
+                   },
+                   fill: function(d){
+                       if(yScale(d) < yScale(70)){
+                           return "red";
+                       }else{
+                           return "limegreen";
+                       }
+                   }
+            });
+            d3.selectAll("#barChart text")
+              .attr({
+                   x: function(d, i){
+                       return svg1Padding + 43 * i + 20;
+                   },
+                   y: function(d){
+                       return svg1Height - svg1Padding + 15;
+                   },
+                   "text-anchor": "middle",
+                   "font-family": "arial",
+                   fill: "navy"
+            }).text(function(d){
+                return yScale(d)/10;
+            });
+        }
+        
+        function random(N, M){
+            var rScale = d3.scale.linear()
+                                 .domain([0, 1])
+                                 .rangeRound([N, M])
+            return rScale(Math.random());
+        }
+        
+        function add(){
+            var num = random(10, 100);
+            ary.push(num);
+            bind(ary);
+            render();
+        }
+        function kick(){
+            ary.shift();
+            bind(ary);
+            render();
+        }       
+//      console.log(d3.selectAll("div"));
+    </script>
+    
+    <hr>
+    
+    <h1>&nbsp;選擇器 [d3.scale.ordinal() in SVG]</h1>
+    
+    <script>
+        var party = ["中國國民黨", "民主進步黨", "時代力量", "無黨團結聯盟", "親民黨"];
+        var pWordColor = ["white", "white", "black", "black", "white"];
+        var pWordScale = d3.scale.ordinal()
+                                 .domain(party)
+                                 .range(pWordColor);
+        var pBackColor = ["blue", "limegreen", "yellow", "lightgrey", "darkorange"];
+        var pBackScale = d3.scale.ordinal()
+                                 .domain(party)
+                                 .range(pBackColor);
+        var pWidth = [115, 115, 92, 135, 72];
+        var pWidthScale = d3.scale.ordinal()
+                                  .domain(party)
+                                  .range(pWidth);
+        
+        var d3body = d3.select("body");
+        var svg2Width = 500, svg2Height = 200, svg2Padding = 35;
+        
+        function svg2(){
+            d3body.append("svg")
+                  .attr({
+                         id: "partyColor",
+                         width: svg2Width,
+                         height: svg2Height,
+            });
+        }
+        
+        svg2();
+        
+        var svg2 = d3.select("#partyColor");
+        for(var i = 0; i < party.length; i++){
+            svg2.append("rect").attr({
+                 x: svg2Padding - 5,
+                 y: (svg2Padding - 20) + 30 * i,
+                 width: pWidthScale(party[i]),
+                 height: 30,
+                 fill: pBackScale(party[i])
+            });
+            svg2.append("text").attr({
+                 x: svg2Padding,
+                 y: svg2Padding + 30 * i,
+                 "font-size": 20,
+                 "font-weight": 900,
+                 fill: pWordScale(party[i])
+            }).text(party[i]);
+        }   
+    </script>
+    
+</body>
+</html>
